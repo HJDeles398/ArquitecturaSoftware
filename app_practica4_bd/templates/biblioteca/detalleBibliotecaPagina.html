@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block titulo %}Detalle de Biblioteca{% endblock %}
+
+{% block contenido %}
+  {% if biblioteca %}
+    <h2>Detalle de la Biblioteca</h2>
+    <p><strong>Dirección:</strong> {{ biblioteca.direccion }}</p>
+
+    <h3>Libros disponibles en esta biblioteca:</h3>
+    {% if libros %}
+      <ul>
+        {% for libro in libros %}
+          <li>{{ libro.titulo }} — {{ libro.autor }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>No hay libros en esta biblioteca.</p>
+    {% endif %}
+
+  {% else %}
+    <p>{{ error }}</p>
+  {% endif %}
+
+  <a href="{% url 'paginaBiblioteca' %}">Volver al listado</a>
+{% endblock %}

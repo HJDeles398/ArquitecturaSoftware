@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block titulo %}Listado de Bibliotecas{% endblock %}
+
+{% block contenido %}
+<h2>Lista de Bibliotecas</h2>
+<ul>
+  {% for item in lista %}
+    <li>
+      <a href="{% url 'detalleBibliotecaPagina' item.id %}">{{ item.direccion }}</a>
+    </li>
+  {% empty %}
+    <p>No hay elementos.</p>
+  {% endfor %}
+</ul>
+{% endblock %}

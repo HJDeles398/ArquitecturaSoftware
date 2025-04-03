@@ -55,7 +55,7 @@ ROOT_URLCONF = 'practica4.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'app_practica4_bd/templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

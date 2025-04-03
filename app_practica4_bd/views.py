@@ -1,9 +1,17 @@
 from django.http import JsonResponse
 from .models import Biblioteca, Usuario, Libro, Prestamo
 from django.views.decorators.csrf import csrf_exempt
+from .forms import BibliotecaForm
+from django.shortcuts import render, redirect
 import json
 import datetime
 
+def inicio(request):
+    contexto = {'mensaje': '¡Bienvenid@ a mi Biblioteca Virtual de Hilario Javier Del Valle Escolar!'}
+    return render(request, 'inicio.html', contexto)
+
+
+#PETICIONES JSON
 #Biblioteca
 @csrf_exempt
 def crearBiblioteca(request):
@@ -18,21 +26,29 @@ def crearBiblioteca(request):
         
     return JsonResponse({"error": "Método no permitido"}, status=405)
 
+
+def obtener_bibliotecas():
+    return list(Biblioteca.objects.values("id", "direccion"))
 @csrf_exempt
 def listarBibliotecas(request):
-    bibliotecas = list(Biblioteca.objects.values("direccion"))
-    return JsonResponse(bibliotecas, safe=False)
+    return JsonResponse(obtener_bibliotecas(), safe=False)
 
+
+def obtener_biblioteca_detalle(id_biblioteca):
+    try:
+        return Biblioteca.objects.get(id=id_biblioteca)
+    except Biblioteca.DoesNotExist:
+        return None
 @csrf_exempt
 def detalleBiblioteca(request, id_biblioteca):
-    try:
-        biblioteca = Biblioteca.objects.values("direccion").get(id=id_biblioteca)
-        return JsonResponse(biblioteca)
-    except Biblioteca.DoesNotExist:
+    biblioteca = obtener_biblioteca_detalle(id_biblioteca)
+    if biblioteca:
+        return JsonResponse({'direccion': biblioteca.direccion})
+    else:
         return JsonResponse({"error": "Biblioteca no encontrada"}, status=404)
+    
 
 #Libro
-
 @csrf_exempt
 def crearLibro(request):
     if request.method == 'POST':
@@ -67,32 +83,35 @@ def crearLibro(request):
     return JsonResponse({"error": "Método no permitido"}, status=405)
 
 
-@csrf_exempt
-def listarLibrosEnBiblioteca(request, id_biblioteca):
+def obtener_libros_en_biblioteca(id_biblioteca, disponible=None):
     try:
         biblioteca = Biblioteca.objects.get(id=id_biblioteca)
     except Biblioteca.DoesNotExist:
-        return JsonResponse({"error": "Biblioteca no encontrada"}, status=404)
+        return None, []
 
-    # Obtener parámetros opcionales de la URL (si existen)
-    disponible = request.GET.get('disponible')  # Puede ser "true" o "false"
-
-    # Filtrar libros por biblioteca
     libros = Libro.objects.filter(biblioteca=biblioteca)
 
-    # Extra: Filtrar por disponibilidad (si el parámetro está presente en la solicitud)
     if disponible is not None:
         if disponible.lower() == "true":
             libros = libros.exclude(prestamo__fecha_devolucion__isnull=True)
         elif disponible.lower() == "false":
             libros = libros.filter(prestamo__fecha_devolucion__isnull=True)
 
-    libros = libros.values("id", "titulo", "autor")
+    return biblioteca, libros
+@csrf_exempt
+def listarLibrosEnBiblioteca(request, id_biblioteca):
+    disponible = request.GET.get('disponible')
+    biblioteca, libros_queryset = obtener_libros_en_biblioteca(id_biblioteca, disponible)
 
+    if biblioteca is None:
+        return JsonResponse({"error": "Biblioteca no encontrada"}, status=404)
+
+    libros = libros_queryset.values("id", "titulo", "autor")
     if not libros.exists():
         return JsonResponse({"mensaje": "No hay libros en esta biblioteca con el criterio seleccionado"}, status=200)
 
     return JsonResponse(list(libros), safe=False)
+
 
 
 @csrf_exempt
@@ -301,3 +320,34 @@ def devolverPrestamo(request, id_prestamo):
             return JsonResponse({"error": "Préstamo no encontrado"}, status=404)
 
     return JsonResponse({"error": "Método no permitido"}, status=405)
+
+#Formularios
+def nuevaBiblioteca(request):
+    if request.method == 'POST':
+        form = BibliotecaForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('listarBibliotecas')
+    else:
+        form = BibliotecaForm()
+    return render(request, 'formCrearBiblioteca.html', {'form': form, 'titulo': 'Nueva Biblioteca'})
+
+
+#Paginas
+def PaginaBiblioteca(request):
+    return render(request, 'biblioteca/biblioteca.html', {'lista': obtener_bibliotecas()})
+
+
+def detalleBibliotecaPagina(request, id_biblioteca):
+    disponible = request.GET.get('disponible')  # opcional
+    biblioteca, libros = obtener_libros_en_biblioteca(id_biblioteca, disponible)
+
+    if biblioteca is None:
+        return render(request, 'biblioteca/detalleBibliotecaPagina.html', {
+            'error': "Biblioteca no encontrada"
+        })
+
+    return render(request, 'biblioteca/detalleBibliotecaPagina.html', {
+        'biblioteca': biblioteca,
+        'libros': libros
+    })
