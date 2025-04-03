@@ -23,7 +23,14 @@ urlpatterns = [
 
     #FORMULARIOS Y PAGINAS
     path('libraries/new/', nuevaBiblioteca, name="nuevaBiblioteca"),
-    path('libraries/BibliotecaPagina', PaginaBiblioteca, name="paginaBiblioteca"),
+    path('libraries/BibliotecaPagina', paginaBiblioteca, name="paginaBiblioteca"),
     path('libraries/detalleBibliotecaPagina/<int:id_biblioteca>/', detalleBibliotecaPagina, name='detalleBibliotecaPagina'),
+
+    path('books/new/', nuevoLibro, name="nuevoLibro"),
+    path('books/LibroPagina', paginaLibro, name="paginaLibro"),
+    path('books/detalleLibroPagina/<int:id_libro>/', detalleLibroPagina, name='detalleLibroPagina'),
+    path('books/detalleLibroPagina/put/<int:id_libro>/', editarLibro, name='putDetalleLibroPagina'),
+    path('books/detalleLibroPagina/delete/<int:id_libro>/', eliminarLibro, name='deleteDetalleLibroPagina'),
+
 
 ]

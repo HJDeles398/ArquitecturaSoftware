@@ -1,10 +1,11 @@
 from django.http import JsonResponse
 from .models import Biblioteca, Usuario, Libro, Prestamo
 from django.views.decorators.csrf import csrf_exempt
-from .forms import BibliotecaForm
-from django.shortcuts import render, redirect
+from .forms import BibliotecaForm, LibroForm
+from django.shortcuts import render, redirect, get_object_or_404
 import json
 import datetime
+from django.db.models import Prefetch
 
 def inicio(request):
     contexto = {'mensaje': '¡Bienvenid@ a mi Biblioteca Virtual de Hilario Javier Del Valle Escolar!'}
@@ -321,23 +322,20 @@ def devolverPrestamo(request, id_prestamo):
 
     return JsonResponse({"error": "Método no permitido"}, status=405)
 
+
 #Formularios
 def nuevaBiblioteca(request):
     if request.method == 'POST':
         form = BibliotecaForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('listarBibliotecas')
+            return redirect('paginaBiblioteca')
     else:
         form = BibliotecaForm()
-    return render(request, 'formCrearBiblioteca.html', {'form': form, 'titulo': 'Nueva Biblioteca'})
-
-
+    return render(request, 'biblioteca/formCrearBiblioteca.html', {'form': form, 'titulo': 'Nueva Biblioteca'})
 #Paginas
-def PaginaBiblioteca(request):
+def paginaBiblioteca(request):
     return render(request, 'biblioteca/biblioteca.html', {'lista': obtener_bibliotecas()})
-
-
 def detalleBibliotecaPagina(request, id_biblioteca):
     disponible = request.GET.get('disponible')  # opcional
     biblioteca, libros = obtener_libros_en_biblioteca(id_biblioteca, disponible)
@@ -351,3 +349,48 @@ def detalleBibliotecaPagina(request, id_biblioteca):
         'biblioteca': biblioteca,
         'libros': libros
     })
+
+ 
+def nuevoLibro(request):
+    if request.method == 'POST':
+        form = LibroForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('paginaLibro')
+    else:
+        form = LibroForm()
+    return render(request, 'libro/formCrearLibro.html', {'form': form, 'titulo': 'Nuevo Libro'})
+def paginaLibro(request):
+    bibliotecas = Biblioteca.objects.prefetch_related(
+        Prefetch('libro_set', queryset=Libro.objects.all())
+    )
+    return render(request, 'libro/libro.html', {
+        'bibliotecas': bibliotecas
+    })
+def detalleLibroPagina(request, id_libro):
+    libro = get_object_or_404(Libro, id=id_libro)
+    
+    # Comprobar disponibilidad (si hay préstamo sin devolución)
+    esta_prestado = libro.prestamo_set.filter(fecha_devolucion__isnull=True).exists()
+
+    return render(request, 'libro/detalleLibroPagina.html', {
+        'libro': libro,
+        'disponible': not esta_prestado
+    })
+def editarLibro(request, id_libro):
+    libro = get_object_or_404(Libro, id=id_libro)
+    if request.method == 'POST':
+        form = LibroForm(request.POST, instance=libro)
+        if form.is_valid():
+            form.save()
+            return redirect('detalleLibroPagina', id_libro=libro.id)
+    else:
+        form = LibroForm(instance=libro)
+    return render(request, 'libro/formEditarLibro.html', {'form': form, 'titulo': 'Editar Libro'})
+def eliminarLibro(request, id_libro):
+    libro = get_object_or_404(Libro, id=id_libro)
+    if request.method == 'POST':
+        libro.delete()
+        return redirect('paginaLibro')
+    return render(request, 'libro/formEliminarLibro.html', {'libro': libro})
+

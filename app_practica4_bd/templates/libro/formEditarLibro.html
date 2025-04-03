@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block titulo %}Editar Libro{% endblock %}
+
+{% block contenido %}
+  <h2>{{ titulo }}</h2>
+
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <button type="submit">Actualizar</button>
+    <a href="{% url 'detalleLibroPagina' form.instance.id %}" class="btn">Cancelar</a>
+  </form>
+{% endblock %}
