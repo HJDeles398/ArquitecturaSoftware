@@ -36,4 +36,10 @@ urlpatterns = [
     path('users/new/', nuevoUsuario, name="nuevoUsuario"),
     path('users/UsuarioPagina', paginaUsuario, name="paginaUsuario"),
     path('users/detalleUsuarioPagina/<int:id_usuario>/', detalleUsuarioPagina, name='detalleUsuarioPagina'),
+
+
+    path('loans/new/', nuevoPrestamo, name='nuevoPrestamo'),
+    path('loans/prestamoPagina', paginaPrestamo, name="paginaPrestamo"),
+    path('loans/historial/', historialPrestamoUsuario, name='historialPrestamoUsuarioPagina'),
+    path('loans/devuelto/<int:id_prestamo>/', prestamoADevuelto, name='prestamoADevuelto')
 ]

@@ -1,11 +1,12 @@
 from django.http import JsonResponse
 from .models import Biblioteca, Usuario, Libro, Prestamo
 from django.views.decorators.csrf import csrf_exempt
-from .forms import BibliotecaForm, LibroForm, UsuarioForm
+from .forms import BibliotecaForm, LibroForm, UsuarioForm, PrestamoForm
 from django.shortcuts import render, redirect, get_object_or_404
 import json
 import datetime
 from django.db.models import Prefetch
+from django.utils import timezone
 
 def inicio(request):
     contexto = {'mensaje': '¡Bienvenid@ a mi Biblioteca Virtual de Hilario Javier Del Valle Escolar!'}
@@ -414,3 +415,44 @@ def detalleUsuarioPagina(request, id_usuario):
         'prestamos': prestamos
     })
 
+
+def nuevoPrestamo(request):
+    if request.method == 'POST':
+        form = PrestamoForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('paginaPrestamo')
+    else:
+        form = PrestamoForm()
+    return render(request, 'prestamo/formCrearPrestamo.html', {'form': form, 'titulo': 'Nuevo Préstamo'})
+def paginaPrestamo(request):
+    prestamos = Prestamo.objects.select_related('usuario', 'libro') \
+                                .filter(fecha_devolucion__isnull=True) \
+                                .order_by('-fecha_prestamo')
+    return render(request, 'prestamo/prestamo.html', {'lista': prestamos})
+def historialPrestamoUsuario(request):
+    id_usuario = request.POST.get('usuario') if request.method == 'POST' else request.GET.get('usuario')
+    
+    if id_usuario:
+        usuario = get_object_or_404(Usuario, id=id_usuario)
+        prestamos = usuario.prestamo_set.all()
+    else:
+        usuario = None
+        prestamos = None
+
+    usuarios = Usuario.objects.all()
+
+    return render(request, 'prestamo/historialPrestamoUsuarioPagina.html', {
+        'usuario': usuario,
+        'prestamos': prestamos,
+        'usuarios': usuarios
+    })
+def prestamoADevuelto(request, id_prestamo):
+    from .models import Prestamo
+    prestamo = get_object_or_404(Prestamo, id=id_prestamo)
+
+    if prestamo.fecha_devolucion is None:
+        prestamo.fecha_devolucion = timezone.now()
+        prestamo.save()
+
+    return redirect('paginaPrestamo')

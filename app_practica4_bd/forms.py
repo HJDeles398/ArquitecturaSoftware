@@ -14,4 +14,9 @@ class LibroForm(forms.ModelForm):
 class UsuarioForm(forms.ModelForm):
     class Meta:
         model = Usuario
-        fields = '__all__'        
+        fields = '__all__'    
+            
+class PrestamoForm(forms.ModelForm):
+    class Meta:
+        model = Prestamo
+        fields = '__all__'
