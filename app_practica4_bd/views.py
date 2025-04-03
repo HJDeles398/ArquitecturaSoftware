@@ -1,7 +1,7 @@
 from django.http import JsonResponse
 from .models import Biblioteca, Usuario, Libro, Prestamo
 from django.views.decorators.csrf import csrf_exempt
-from .forms import BibliotecaForm, LibroForm
+from .forms import BibliotecaForm, LibroForm, UsuarioForm
 from django.shortcuts import render, redirect, get_object_or_404
 import json
 import datetime
@@ -393,4 +393,24 @@ def eliminarLibro(request, id_libro):
         libro.delete()
         return redirect('paginaLibro')
     return render(request, 'libro/formEliminarLibro.html', {'libro': libro})
+
+def nuevoUsuario(request):
+    if request.method == 'POST':
+        form = UsuarioForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('paginaUsuario')
+    else:
+        form = UsuarioForm()
+    return render(request, 'usuario/formCrearUsuario.html', {'form': form, 'titulo': 'Nuevo Usuario'})
+def paginaUsuario(request):
+    return render(request, 'usuario/usuario.html', {'lista': Usuario.objects.all()})
+def detalleUsuarioPagina(request, id_usuario):
+    usuario = get_object_or_404(Usuario, id=id_usuario)
+    prestamos = usuario.prestamo_set.all()
+    
+    return render(request, 'usuario/detalleUsuarioPagina.html', {
+        'usuario': usuario,
+        'prestamos': prestamos
+    })
 

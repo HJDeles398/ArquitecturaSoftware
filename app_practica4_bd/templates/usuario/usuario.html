@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block titulo %}Listado de Usuarios{% endblock %}
+
+{% block contenido %}
+<h2>Lista de Usuarios</h2>
+<ul>
+  {% for usuario in lista %}
+    <li>
+      <a href="{% url 'detalleUsuarioPagina' usuario.id %}">
+        {{ usuario.nombre }} {{ usuario.apellido }}
+      </a>
+    </li>
+  {% empty %}
+    <p>No hay usuarios registrados.</p>
+  {% endfor %}
+</ul>
+
+<button>
+  <a href="{% url 'nuevoUsuario' %}">Crear Usuario</a>
+</button>
+{% endblock %}

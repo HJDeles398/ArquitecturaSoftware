@@ -33,4 +33,7 @@ urlpatterns = [
     path('books/detalleLibroPagina/delete/<int:id_libro>/', eliminarLibro, name='deleteDetalleLibroPagina'),
 
 
+    path('users/new/', nuevoUsuario, name="nuevoUsuario"),
+    path('users/UsuarioPagina', paginaUsuario, name="paginaUsuario"),
+    path('users/detalleUsuarioPagina/<int:id_usuario>/', detalleUsuarioPagina, name='detalleUsuarioPagina'),
 ]
