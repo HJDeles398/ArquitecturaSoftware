@@ -21,8 +21,6 @@
   {% empty %}
     <p>No hay bibliotecas registradas.</p>
   {% endfor %}
-  <button>
-    <a href="{% url 'nuevoLibro' %}">Crear Libro</a>
-  </button>
 
+  <a href="{% url 'nuevoLibro' %}">Crear Libro</a>
 {% endblock %}

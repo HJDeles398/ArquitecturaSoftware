@@ -4,9 +4,9 @@
 
 {% block contenido %}
   <h2>{{ libro.titulo }}</h2>
-  <p><strong>Autor:</strong> {{ libro.autor }}</p>
-  <p><strong>Biblioteca:</strong> {{ libro.biblioteca.direccion }}</p>
-  <p><strong>Disponibilidad:</strong> 
+  <p>Autor: {{ libro.autor }}</p>
+  <p>Biblioteca: {{ libro.biblioteca.direccion }}</p>
+  <p>Disponibilidad: 
     {% if disponible %}
       Disponible
     {% else %}
@@ -14,12 +14,7 @@
     {% endif %}
   </p>
 
-  <a href="{% url 'paginaLibro' %}">← Volver al listado</a>
-  <button>
-    <a href="{% url 'putDetalleLibroPagina' libro.id %}">✏️ Editar</a>
-  </button>
-  <button>
-    <a href="{% url 'deleteDetalleLibroPagina' libro.id %}">🗑️ Eliminar</a>
-  </button>
-  
+  <a href="{% url 'paginaLibro' %}">Volver al listado</a>
+  <a href="{% url 'putDetalleLibroPagina' libro.id %}">Editar</a>
+  <a href="{% url 'deleteDetalleLibroPagina' libro.id %}">Eliminar</a>
 {% endblock %}

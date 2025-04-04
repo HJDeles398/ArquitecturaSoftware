@@ -8,8 +8,7 @@
   <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
-
-    <button type="submit">Actualizar</button>
-    <a href="{% url 'detalleLibroPagina' form.instance.id %}" class="btn">Cancelar</a>
+    <input type="submit" value="Actualizar">
+    <a href="{% url 'detalleLibroPagina' form.instance.id %}">Cancelar</a>
   </form>
 {% endblock %}

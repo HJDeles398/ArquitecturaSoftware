@@ -5,7 +5,7 @@
 {% block contenido %}
   {% if biblioteca %}
     <h2>Detalle de la Biblioteca</h2>
-    <p><strong>Dirección:</strong> {{ biblioteca.direccion }}</p>
+    <p>Dirección: {{ biblioteca.direccion }}</p>
 
     <h3>Libros disponibles en esta biblioteca:</h3>
     {% if libros %}
@@ -17,7 +17,6 @@
     {% else %}
       <p>No hay libros en esta biblioteca.</p>
     {% endif %}
-
   {% else %}
     <p>{{ error }}</p>
   {% endif %}

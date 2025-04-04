@@ -14,7 +14,7 @@
         </option>
       {% endfor %}
     </select>
-    <button type="submit">Ver historial</button>
+    <input type="submit" value="Ver historial">
   </form>
 
   {% if usuario %}
@@ -25,11 +25,11 @@
       <ul>
         {% for prestamo in prestamos %}
           <li>
-            <strong>{{ prestamo.libro.titulo }}</strong> — prestado el {{ prestamo.fecha_prestamo }}
+            {{ prestamo.libro.titulo }} — prestado el {{ prestamo.fecha_prestamo }}
             {% if prestamo.fecha_devolucion %}
               , devuelto el {{ prestamo.fecha_devolucion }}
             {% else %}
-              , <em>no devuelto</em>
+              , no devuelto
             {% endif %}
           </li>
         {% endfor %}
@@ -40,5 +40,5 @@
   {% endif %}
 
   <br>
-  <a href="{% url 'paginaPrestamo' %}"><button>← Volver a préstamos</button></a>
+  <a href="{% url 'paginaPrestamo' %}">Volver a préstamos</a>
 {% endblock %}

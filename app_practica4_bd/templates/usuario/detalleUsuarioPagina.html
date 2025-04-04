@@ -10,7 +10,12 @@
     <ul>
       {% for prestamo in prestamos %}
         <li>
-          <strong>{{ prestamo.libro.titulo }}</strong> prestado el {{ prestamo.fecha_prestamo }}{% if prestamo.fecha_devolucion %} y devuelto el {{ prestamo.fecha_devolucion }}{% else %}, <em>no devuelto</em>{% endif %}
+          {{ prestamo.libro.titulo }} prestado el {{ prestamo.fecha_prestamo }}
+          {% if prestamo.fecha_devolucion %}
+            y devuelto el {{ prestamo.fecha_devolucion }}
+          {% else %}
+            , no devuelto
+          {% endif %}
         </li>
       {% endfor %}
     </ul>
@@ -18,6 +23,5 @@
     <p>Este usuario no tiene préstamos registrados.</p>
   {% endif %}
 
-    <a href="{% url 'paginaUsuario' %}">← Volver al listado</a>
-
+  <a href="{% url 'paginaUsuario' %}">Volver al listado</a>
 {% endblock %}

@@ -3,30 +3,38 @@
 {% block titulo %}Préstamos Activos{% endblock %}
 
 {% block contenido %}
-<h2>Listado de Préstamos Activos</h2>
+<h2>Listado de Préstamos</h2>
+
+<p>
+  <a href="{% url 'paginaPrestamo' %}">Ver todos</a> |
+  <a href="{% url 'paginaPrestamo' %}?disponible=true">Devueltos</a> |
+  <a href="{% url 'paginaPrestamo' %}?disponible=false">No devueltos</a>
+</p>
 
 <ul>
   {% for prestamo in lista %}
     <li>
-      <strong>{{ prestamo.libro.titulo }}</strong> prestado a 
-      <strong>{{ prestamo.usuario.nombre }} {{ prestamo.usuario.apellido }}</strong>
+      {{ prestamo.libro.titulo }} prestado a 
+      {{ prestamo.usuario.nombre }} {{ prestamo.usuario.apellido }}
       el {{ prestamo.fecha_prestamo }}
-      —> no devuelto
 
-      <form method="post" action="{% url 'prestamoADevuelto' prestamo.id %}" style="display:inline">
-        {% csrf_token %}
-        <button type="submit">Marcar como devuelto</button>
-      </form>
+      {% if not prestamo.fecha_devolucion %}
+        — No devuelto
+        <form method="post" action="{% url 'prestamoADevuelto' prestamo.id %}" style="display:inline">
+          {% csrf_token %}
+          <input type="submit" value="Marcar como devuelto">
+        </form>
+      {% else %}
+        — Devuelto el {{ prestamo.fecha_devolucion }}
+      {% endif %}
     </li>
   {% empty %}
-    <p>No hay préstamos activos en este momento.</p>
+    <p>No hay préstamos registrados en este momento.</p>
   {% endfor %}
 </ul>
 
-<a href="{% url 'nuevoPrestamo' %}">
-  <button>Crear Préstamo</button>
-</a>
-<a href="{% url 'historialPrestamoUsuarioPagina' %}">
-  <button>Ver historial por usuario</button>
-</a>
+<p>
+  <a href="{% url 'nuevoPrestamo' %}">Crear Préstamo</a> |
+  <a href="{% url 'historialPrestamoUsuarioPagina' %}">Ver historial por usuario</a>
+</p>
 {% endblock %}

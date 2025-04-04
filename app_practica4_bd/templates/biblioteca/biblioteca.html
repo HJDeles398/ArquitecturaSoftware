@@ -10,10 +10,9 @@
       <a href="{% url 'detalleBibliotecaPagina' item.id %}">{{ item.direccion }}</a>
     </li>
   {% empty %}
-    <p>No hay elementos.</p>
+    <li>No hay elementos.</li>
   {% endfor %}
 </ul>
-<button>
-  <a href="{% url 'nuevaBiblioteca' %}">Crear Biblioteca</a>
-</button>
+
+<a href="{% url 'nuevaBiblioteca' %}">Crear Biblioteca</a>
 {% endblock %}

@@ -12,11 +12,9 @@
       </a>
     </li>
   {% empty %}
-    <p>No hay usuarios registrados.</p>
+    <li>No hay usuarios registrados.</li>
   {% endfor %}
 </ul>
 
-<button>
-  <a href="{% url 'nuevoUsuario' %}">Crear Usuario</a>
-</button>
+<a href="{% url 'nuevoUsuario' %}">Crear Usuario</a>
 {% endblock %}
