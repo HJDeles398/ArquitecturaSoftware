@@ -21,7 +21,7 @@ urlpatterns = [
     path('users/<int:id_usuario>/loans', prestamosUsuario, name="prestamosUsuario"),
     path('loans/<int:id_prestamo>/', devolverPrestamo, name="devolverPrestamo"),
 
-    #FORMULARIOS Y PAGINAS
+    #FORMULARIOS Y PAGINAS // Practica Evaluable 2
     path('libraries/new/', nuevaBiblioteca, name="nuevaBiblioteca"),
     path('libraries/BibliotecaPagina', paginaBiblioteca, name="paginaBiblioteca"),
     path('libraries/detalleBibliotecaPagina/<int:id_biblioteca>/', detalleBibliotecaPagina, name='detalleBibliotecaPagina'),

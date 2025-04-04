@@ -7,6 +7,7 @@ import json
 import datetime
 from django.db.models import Prefetch
 from django.utils import timezone
+from django.contrib import messages
 
 def inicio(request):
     contexto = {'mensaje': '¡Bienvenid@ a mi Biblioteca Virtual de Hilario Javier Del Valle Escolar!'}
@@ -324,9 +325,7 @@ def devolverPrestamo(request, id_prestamo):
     return JsonResponse({"error": "Método no permitido"}, status=405)
 
 
-# Formularios
-from django.contrib import messages
-
+# Formularios // Páginas Practica Evaluable 2
 def nuevaBiblioteca(request):
     if request.method == 'POST':
         form = BibliotecaForm(request.POST)
@@ -340,12 +339,12 @@ def nuevaBiblioteca(request):
         form = BibliotecaForm()
     return render(request, 'biblioteca/formCrearBiblioteca.html', {'form': form, 'titulo': 'Nueva Biblioteca'})
 
-# Páginas
+
 def paginaBiblioteca(request):
     return render(request, 'biblioteca/biblioteca.html', {'lista': obtener_bibliotecas()})
 
 def detalleBibliotecaPagina(request, id_biblioteca):
-    disponible = request.GET.get('disponible')  # opcional
+    disponible = request.GET.get('disponible') 
     biblioteca, libros = obtener_libros_en_biblioteca(id_biblioteca, disponible)
 
     if biblioteca is None:
@@ -383,7 +382,6 @@ def paginaLibro(request):
 def detalleLibroPagina(request, id_libro):
     libro = get_object_or_404(Libro, id=id_libro)
     
-    # Comprobar disponibilidad (si hay préstamo sin devolución)
     esta_prestado = libro.prestamo_set.filter(fecha_devolucion__isnull=True).exists()
 
     return render(request, 'libro/detalleLibroPagina.html', {
