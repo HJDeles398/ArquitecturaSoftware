@@ -1,9 +1,20 @@
 from django.http import JsonResponse
 from .models import Biblioteca, Usuario, Libro, Prestamo
 from django.views.decorators.csrf import csrf_exempt
+from .forms import BibliotecaForm, LibroForm, UsuarioForm, PrestamoForm
+from django.shortcuts import render, redirect, get_object_or_404
 import json
 import datetime
+from django.db.models import Prefetch
+from django.utils import timezone
+from django.contrib import messages
 
+def inicio(request):
+    contexto = {'mensaje': '¡Bienvenid@ a mi Biblioteca Virtual de Hilario Javier Del Valle Escolar!'}
+    return render(request, 'inicio.html', contexto)
+
+
+#PETICIONES JSON
 #Biblioteca
 @csrf_exempt
 def crearBiblioteca(request):
@@ -18,21 +29,29 @@ def crearBiblioteca(request):
         
     return JsonResponse({"error": "Método no permitido"}, status=405)
 
+
+def obtener_bibliotecas():
+    return list(Biblioteca.objects.values("id", "direccion"))
 @csrf_exempt
 def listarBibliotecas(request):
-    bibliotecas = list(Biblioteca.objects.values("direccion"))
-    return JsonResponse(bibliotecas, safe=False)
+    return JsonResponse(obtener_bibliotecas(), safe=False)
 
+
+def obtener_biblioteca_detalle(id_biblioteca):
+    try:
+        return Biblioteca.objects.get(id=id_biblioteca)
+    except Biblioteca.DoesNotExist:
+        return None
 @csrf_exempt
 def detalleBiblioteca(request, id_biblioteca):
-    try:
-        biblioteca = Biblioteca.objects.values("direccion").get(id=id_biblioteca)
-        return JsonResponse(biblioteca)
-    except Biblioteca.DoesNotExist:
+    biblioteca = obtener_biblioteca_detalle(id_biblioteca)
+    if biblioteca:
+        return JsonResponse({'direccion': biblioteca.direccion})
+    else:
         return JsonResponse({"error": "Biblioteca no encontrada"}, status=404)
+    
 
 #Libro
-
 @csrf_exempt
 def crearLibro(request):
     if request.method == 'POST':
@@ -67,32 +86,35 @@ def crearLibro(request):
     return JsonResponse({"error": "Método no permitido"}, status=405)
 
 
-@csrf_exempt
-def listarLibrosEnBiblioteca(request, id_biblioteca):
+def obtener_libros_en_biblioteca(id_biblioteca, disponible=None):
     try:
         biblioteca = Biblioteca.objects.get(id=id_biblioteca)
     except Biblioteca.DoesNotExist:
-        return JsonResponse({"error": "Biblioteca no encontrada"}, status=404)
+        return None, []
 
-    # Obtener parámetros opcionales de la URL (si existen)
-    disponible = request.GET.get('disponible')  # Puede ser "true" o "false"
-
-    # Filtrar libros por biblioteca
     libros = Libro.objects.filter(biblioteca=biblioteca)
 
-    # Extra: Filtrar por disponibilidad (si el parámetro está presente en la solicitud)
     if disponible is not None:
         if disponible.lower() == "true":
             libros = libros.exclude(prestamo__fecha_devolucion__isnull=True)
         elif disponible.lower() == "false":
             libros = libros.filter(prestamo__fecha_devolucion__isnull=True)
 
-    libros = libros.values("id", "titulo", "autor")
+    return biblioteca, libros
+@csrf_exempt
+def listarLibrosEnBiblioteca(request, id_biblioteca):
+    disponible = request.GET.get('disponible')
+    biblioteca, libros_queryset = obtener_libros_en_biblioteca(id_biblioteca, disponible)
 
+    if biblioteca is None:
+        return JsonResponse({"error": "Biblioteca no encontrada"}, status=404)
+
+    libros = libros_queryset.values("id", "titulo", "autor")
     if not libros.exists():
         return JsonResponse({"mensaje": "No hay libros en esta biblioteca con el criterio seleccionado"}, status=200)
 
     return JsonResponse(list(libros), safe=False)
+
 
 
 @csrf_exempt
@@ -301,3 +323,179 @@ def devolverPrestamo(request, id_prestamo):
             return JsonResponse({"error": "Préstamo no encontrado"}, status=404)
 
     return JsonResponse({"error": "Método no permitido"}, status=405)
+
+
+# Formularios // Páginas Practica Evaluable 2
+def nuevaBiblioteca(request):
+    if request.method == 'POST':
+        form = BibliotecaForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "✅ Biblioteca creada con éxito.")
+            return redirect('paginaBiblioteca')
+        else:
+            messages.error(request, "❌ Error al crear la biblioteca.")
+    else:
+        form = BibliotecaForm()
+    return render(request, 'biblioteca/formCrearBiblioteca.html', {'form': form, 'titulo': 'Nueva Biblioteca'})
+
+
+def paginaBiblioteca(request):
+    return render(request, 'biblioteca/biblioteca.html', {'lista': obtener_bibliotecas()})
+
+def detalleBibliotecaPagina(request, id_biblioteca):
+    disponible = request.GET.get('disponible') 
+    biblioteca, libros = obtener_libros_en_biblioteca(id_biblioteca, disponible)
+
+    if biblioteca is None:
+        return render(request, 'biblioteca/detalleBibliotecaPagina.html', {
+            'error': "Biblioteca no encontrada"
+        })
+
+    return render(request, 'biblioteca/detalleBibliotecaPagina.html', {
+        'biblioteca': biblioteca,
+        'libros': libros
+    })
+
+
+def nuevoLibro(request):
+    if request.method == 'POST':
+        form = LibroForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "✅ Libro creado con éxito.")
+            return redirect('paginaLibro')
+        else:
+            messages.error(request, "❌ Error al crear el libro.")
+    else:
+        form = LibroForm()
+    return render(request, 'libro/formCrearLibro.html', {'form': form, 'titulo': 'Nuevo Libro'})
+
+def paginaLibro(request):
+    bibliotecas = Biblioteca.objects.prefetch_related(
+        Prefetch('libro_set', queryset=Libro.objects.all())
+    )
+    return render(request, 'libro/libro.html', {
+        'bibliotecas': bibliotecas
+    })
+
+def detalleLibroPagina(request, id_libro):
+    libro = get_object_or_404(Libro, id=id_libro)
+    
+    esta_prestado = libro.prestamo_set.filter(fecha_devolucion__isnull=True).exists()
+
+    return render(request, 'libro/detalleLibroPagina.html', {
+        'libro': libro,
+        'disponible': not esta_prestado
+    })
+
+def editarLibro(request, id_libro):
+    libro = get_object_or_404(Libro, id=id_libro)
+    if request.method == 'POST':
+        form = LibroForm(request.POST, instance=libro)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "✅ Libro actualizado con éxito.")
+            return redirect('detalleLibroPagina', id_libro=libro.id)
+        else:
+            messages.error(request, "❌ Error al actualizar el libro.")
+    else:
+        form = LibroForm(instance=libro)
+    return render(request, 'libro/formEditarLibro.html', {'form': form, 'titulo': 'Editar Libro'})
+
+def eliminarLibro(request, id_libro):
+    libro = get_object_or_404(Libro, id=id_libro)
+    if request.method == 'POST':
+        libro.delete()
+        messages.success(request, "Libro eliminado con éxito.")
+        return redirect('paginaLibro')
+    return render(request, 'libro/formEliminarLibro.html', {'libro': libro})
+
+
+def nuevoUsuario(request):
+    if request.method == 'POST':
+        form = UsuarioForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "✅ Usuario creado con éxito.")
+            return redirect('paginaUsuario')
+        else:
+            messages.error(request, "❌ Error al crear el usuario.")
+    else:
+        form = UsuarioForm()
+    return render(request, 'usuario/formCrearUsuario.html', {'form': form, 'titulo': 'Nuevo Usuario'})
+
+def paginaUsuario(request):
+    return render(request, 'usuario/usuario.html', {'lista': Usuario.objects.all()})
+
+def detalleUsuarioPagina(request, id_usuario):
+    usuario = get_object_or_404(Usuario, id=id_usuario)
+    prestamos = usuario.prestamo_set.all()
+    
+    return render(request, 'usuario/detalleUsuarioPagina.html', {
+        'usuario': usuario,
+        'prestamos': prestamos
+    })
+
+
+def nuevoPrestamo(request):
+    if request.method == 'POST':
+        form = PrestamoForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "✅ Préstamo creado con éxito.")
+            return redirect('paginaPrestamo')
+        else:
+            messages.error(request, "❌ Error al crear el préstamo.")
+    else:
+        form = PrestamoForm()
+    return render(request, 'prestamo/formCrearPrestamo.html', {'form': form, 'titulo': 'Nuevo Préstamo'})
+
+# EXTRA
+def paginaPrestamo(request):
+    disponible = request.GET.get('disponible')
+
+    prestamos = Prestamo.objects.select_related('usuario', 'libro')
+
+    if disponible == 'true':
+        prestamos = prestamos.filter(fecha_devolucion__isnull=False)
+    elif disponible == 'false':
+        prestamos = prestamos.filter(fecha_devolucion__isnull=True)
+
+    prestamos = prestamos.order_by('-fecha_prestamo')
+
+    return render(request, 'prestamo/prestamo.html', {
+        'lista': prestamos,
+        'filtro': disponible
+    })
+
+def historialPrestamoUsuario(request):
+    id_usuario = request.POST.get('usuario') if request.method == 'POST' else request.GET.get('usuario')
+    
+    if id_usuario:
+        usuario = get_object_or_404(Usuario, id=id_usuario)
+        prestamos = usuario.prestamo_set.all()
+    else:
+        usuario = None
+        prestamos = None
+
+    usuarios = Usuario.objects.all()
+
+    return render(request, 'prestamo/historialPrestamoUsuarioPagina.html', {
+        'usuario': usuario,
+        'prestamos': prestamos,
+        'usuarios': usuarios
+    })
+
+def prestamoADevuelto(request, id_prestamo):
+    from .models import Prestamo
+    prestamo = get_object_or_404(Prestamo, id=id_prestamo)
+
+    if prestamo.fecha_devolucion is None:
+        prestamo.fecha_devolucion = timezone.now()
+        prestamo.save()
+        messages.success(request, "Préstamo marcado como devuelto.")
+    else:
+        messages.info(request, "Este préstamo ya había sido devuelto.")
+
+    return redirect('paginaPrestamo')

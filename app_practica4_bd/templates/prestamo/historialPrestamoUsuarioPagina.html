@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block titulo %}Historial de Préstamos{% endblock %}
+
+{% block contenido %}
+  <h2>Selecciona un usuario para ver su historial</h2>
+
+  <form method="post">
+    {% csrf_token %}
+    <select name="usuario">
+      {% for u in usuarios %}
+        <option value="{{ u.id }}" {% if usuario and usuario.id == u.id %}selected{% endif %}>
+          {{ u.nombre }} {{ u.apellido }}
+        </option>
+      {% endfor %}
+    </select>
+    <input type="submit" value="Ver historial">
+  </form>
+
+  {% if usuario %}
+    <hr>
+    <h3>Historial de {{ usuario.nombre }} {{ usuario.apellido }}</h3>
+
+    {% if prestamos %}
+      <ul>
+        {% for prestamo in prestamos %}
+          <li>
+            {{ prestamo.libro.titulo }} — prestado el {{ prestamo.fecha_prestamo }}
+            {% if prestamo.fecha_devolucion %}
+              , devuelto el {{ prestamo.fecha_devolucion }}
+            {% else %}
+              , no devuelto
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>Este usuario no tiene préstamos registrados.</p>
+    {% endif %}
+  {% endif %}
+
+  <br>
+  <a href="{% url 'paginaPrestamo' %}">Volver a préstamos</a>
+{% endblock %}

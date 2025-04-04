@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block titulo %}Préstamos Activos{% endblock %}
+
+{% block contenido %}
+<h2>Listado de Préstamos</h2>
+
+<p>
+  <a href="{% url 'paginaPrestamo' %}">Ver todos</a> |
+  <a href="{% url 'paginaPrestamo' %}?disponible=true">Devueltos</a> |
+  <a href="{% url 'paginaPrestamo' %}?disponible=false">No devueltos</a>
+</p>
+
+<ul>
+  {% for prestamo in lista %}
+    <li>
+      {{ prestamo.libro.titulo }} prestado a 
+      {{ prestamo.usuario.nombre }} {{ prestamo.usuario.apellido }}
+      el {{ prestamo.fecha_prestamo }}
+
+      {% if not prestamo.fecha_devolucion %}
+        — No devuelto
+        <form method="post" action="{% url 'prestamoADevuelto' prestamo.id %}" style="display:inline">
+          {% csrf_token %}
+          <input type="submit" value="Marcar como devuelto">
+        </form>
+      {% else %}
+        — Devuelto el {{ prestamo.fecha_devolucion }}
+      {% endif %}
+    </li>
+  {% empty %}
+    <p>No hay préstamos registrados en este momento.</p>
+  {% endfor %}
+</ul>
+
+<p>
+  <a href="{% url 'nuevoPrestamo' %}">Crear Préstamo</a> |
+  <a href="{% url 'historialPrestamoUsuarioPagina' %}">Ver historial por usuario</a>
+</p>
+{% endblock %}

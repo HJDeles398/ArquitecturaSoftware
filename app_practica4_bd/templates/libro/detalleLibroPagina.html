@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block titulo %}Detalle del Libro{% endblock %}
+
+{% block contenido %}
+  <h2>{{ libro.titulo }}</h2>
+  <p>Autor: {{ libro.autor }}</p>
+  <p>Biblioteca: {{ libro.biblioteca.direccion }}</p>
+  <p>Disponibilidad: 
+    {% if disponible %}
+      Disponible
+    {% else %}
+      Actualmente prestado
+    {% endif %}
+  </p>
+
+  <a href="{% url 'paginaLibro' %}">Volver al listado</a>
+  <a href="{% url 'putDetalleLibroPagina' libro.id %}">Editar</a>
+  <a href="{% url 'deleteDetalleLibroPagina' libro.id %}">Eliminar</a>
+{% endblock %}

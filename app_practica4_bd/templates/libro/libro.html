@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block titulo %}Libros por Biblioteca{% endblock %}
+
+{% block contenido %}
+  <h2>Libros agrupados por Biblioteca</h2>
+
+  {% for biblioteca in bibliotecas %}
+    <h3>{{ biblioteca.direccion }}</h3>
+    {% if biblioteca.libro_set.all %}
+      <ul>
+        {% for libro in biblioteca.libro_set.all %}
+          <li>
+            <a href="{% url 'detalleLibroPagina' libro.id %}">{{ libro.titulo }}</a> — {{ libro.autor }}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>No hay libros en esta biblioteca.</p>
+    {% endif %}
+  {% empty %}
+    <p>No hay bibliotecas registradas.</p>
+  {% endfor %}
+
+  <a href="{% url 'nuevoLibro' %}">Crear Libro</a>
+{% endblock %}
